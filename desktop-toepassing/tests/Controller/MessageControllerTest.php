@@ -161,4 +161,97 @@ class MessageControllerTest extends WebTestCase
 
         $this->assertEquals(404, $client->getResponse()->getStatusCode());
     }
+
+    //Individuele tests
+    public function testUitbreidingen()
+    {
+        $client = static::createClient();
+
+        $client->request('GET', '/uitbreiding');
+
+        $this->assertEquals(200, $client->getResponse()->getStatusCode());
+    }
+
+    public function testPerPageParameter()
+    {
+        $client = static::createClient();
+
+        $client->request('GET', '/uitbreiding?per-page=10');
+
+        $this->assertEquals(200, $client->getResponse()->getStatusCode());
+    }
+
+    public function testSortParameter()
+    {
+        $client = static::createClient();
+
+        $client->request('GET', '/uitbreiding??sort=p.content&direction=asc');
+
+        $this->assertEquals(500, $client->getResponse()->getStatusCode());
+    }
+
+    public function testSortParameterWithPageParameter()
+    {
+        $client = static::createClient();
+
+        $client->request('GET', '/uitbreiding??sort=p.content&direction=asc&page=1');
+
+        $this->assertEquals(500, $client->getResponse()->getStatusCode());
+    }
+
+    public function testPostFilterParameter()
+    {
+        $response = $this->client->post('/uitbreiding', [
+            'json' => [
+                'message_search[content]'    => "Cras",
+            ]
+        ]);
+
+        $this->assertEquals(302, $response->getStatusCode());
+    }
+
+    public function testWrongPath()
+    {
+        $client = static::createClient();
+
+        $client->request('GET', '/uitbreidingen');
+
+        $this->assertEquals(404, $client->getResponse()->getStatusCode());
+    }
+
+    public function testWrongPageNumber()
+    {
+        $client = static::createClient();
+
+        $client->request('GET', '/uitbreiding?page=10099879789');
+
+        $this->assertEquals(200, $client->getResponse()->getStatusCode());
+    }
+
+    public function testWrongFilterName()
+    {
+        $client = static::createClient();
+
+        $client->request('GET', '/uitbreiding?sort=p.contentsad&direction=asc');
+
+        $this->assertEquals(500, $client->getResponse()->getStatusCode());
+    }
+
+    public function testWrongParameter()
+    {
+        $client = static::createClient();
+
+        $client->request('GET', '/uitbreiding?dsifj=34');
+
+        $this->assertEquals(200, $client->getResponse()->getStatusCode());
+    }
+
+    public function testFilterDesc()
+    {
+        $client = static::createClient();
+
+        $client->request('GET', '/uitbreiding?sort=p.downVotes&direction=desc');
+
+        $this->assertEquals(200, $client->getResponse()->getStatusCode());
+    }
 }

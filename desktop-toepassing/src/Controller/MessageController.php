@@ -353,4 +353,62 @@ class MessageController extends Controller
         }
         return new Response("Comment Not Posted", $this->badRequestStatusCode);
     }
+
+
+
+    // anonieme gebruikers
+    // we moeten gebruik maken van paginatie.
+    /**
+     * @Route("/uitbreiding", name="uitbreiding")
+     */
+    public function uitbreiding(Request $request, PaginatorInterface $paginator)
+    {
+        $comment = new Comment();
+        $commentForm = $this->createForm(CommenType::class, $comment);
+        // Form for creating searched message
+        $searchMessage = new Message();
+        $categories = $this->getCategories();
+        $messageSearchForm = $this->createForm(MessageSearchType::class, $searchMessage);
+
+        $message = new Message();
+        $messageForm =  $this->createForm(MessageType::class, $message);
+        $deleteMessageForm =  $this->createForm(DeleteMessageType::class, $message);
+        $upVoteMessageForm =  $this->createForm(VoteMessageType::class, $message);
+        $downVoteMessageForm =  $this->createForm(VoteMessageType::class, $message);
+
+        $category = new Category();
+        $categoryForm = $this->createForm(CategoryType::class, $category);
+
+        // form for retrieving search message query
+        $searchedMessage = new Message();
+        $form = $this->createForm(MessageSearchType::class, $searchedMessage);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $messagesRepository = $this->getDoctrine()->getManager()->getRepository(Message::class);
+            $content = $searchedMessage->getContent();
+            $queryBuilder = $messagesRepository->createQueryBuilder('m')->where('m.content LIKE :content')->setParameter('content', "%$content%")->getQuery();
+        } else {
+            $messagesRepository = $this->getDoctrine()->getManager()->getRepository(Message::class);
+            $queryBuilder = $messagesRepository->createQueryBuilder('p')->getQuery();
+        }
+        //paginatie
+        $pagination = $paginator->paginate(
+            $queryBuilder,
+            $request->query->getInt('page', 1),
+            $request->query->getInt('per-page', 5)
+        );
+
+        return $this->render('message/uitbreiding.html.twig', array(
+            'messageSearchFormObject' => $messageSearchForm,
+            'commentFormObject' => $commentForm,
+            'messageFormObject' => $messageForm,
+            'categories' => $categories,
+            'categoryFormObject' => $categoryForm,
+            'deleteMessageFormObject' => $deleteMessageForm,
+            'upVoteMessageFormObject' => $upVoteMessageForm,
+            'downVoteMessageFormObject' => $downVoteMessageForm,
+            'messages' => $pagination,
+            'controller_name' => 'Message Controller'));
+    }
 }
